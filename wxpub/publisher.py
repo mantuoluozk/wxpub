@@ -20,7 +20,7 @@ from typing import Callable, List, Optional
 
 from .cover import SIZES, render_cover
 from .frontmatter import parse_frontmatter, split_tags
-from .images import ImageIssue, describe, normalize
+from .images import ImageIssue, copy_next_to, describe, normalize
 from .markdown import Style, plain_text, render
 from .sanitize import sanitize
 from .theme import THEMES, get_theme
@@ -238,6 +238,9 @@ def build_bundle(
         if upload_image:
             return upload_image(fixed)
         if copy_images:
+            # normalize 对「本来就合格」的图是原样返回、不落盘的，
+            # 但预览页需要图片真的在 out/imgs 下，否则整页都是裂图。
+            copy_next_to(fixed, str(out / "imgs"))
             return f"imgs/{Path(fixed).name}"
         return src
 
@@ -245,6 +248,18 @@ def build_bundle(
     # 兜底清洗：万一用户自己在 markdown 里写了 <a> 或从别处粘进了零宽字符
     html, sanitize_notes = sanitize(html, drop_local_images=upload_image is not None)
     warnings.extend(sanitize_notes)
+
+    # 预览页要自包含：封面如果不在输出目录里，复制一份过来，
+    # 否则用户挪动 out 目录或者从别的路径打开，封面就是裂的。
+    if cover_path.parent.resolve() != out.resolve():
+        dest = out / f"cover{cover_path.suffix or '.png'}"
+        try:
+            if cover_path.resolve() != dest.resolve():
+                copy_next_to(str(cover_path), str(out))
+                dest = out / cover_path.name
+            cover_path = dest
+        except OSError:
+            pass
 
     warnings.extend(check_citations(body))
     warnings.extend(check_links(body))
@@ -283,6 +298,7 @@ body{margin:0;background:#eceef1;font-family:-apple-system,BlinkMacSystemFont,"P
 .m{font-size:13px;color:#9aa0a6;display:flex;gap:10px;align-items:center}
 .m .tag{color:#576b95}
 .body{padding:8px 20px 0}
+.cap{font-size:11px;color:#b0b6bd;text-align:center;padding:6px 0 0;letter-spacing:.04em}
 .notice{margin:16px 20px;padding:10px 14px;background:#fff8e6;border:1px solid #ffe1a8;border-radius:8px;font-size:12px;color:#8a6d3b;line-height:1.6}
 """
 
@@ -307,6 +323,7 @@ def write_preview(bundle: Bundle) -> Path:
 <style>{PREVIEW_CSS}</style></head>
 <body><div class="phone">
 <img class="cover" src="{cover_rel}" alt="封面">
+<div class="cap">封面 · 只在信息流展示，正文页从这里开始</div>
 <div class="head">
   <div class="t">{_html.escape(bundle.title)}</div>
   <div class="m"><span>{bundle.author or '未署名'}</span><span>{date.today().isoformat()}</span></div>

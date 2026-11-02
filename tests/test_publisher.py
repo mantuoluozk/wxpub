@@ -103,6 +103,28 @@ class TestBuildBundle(PublisherTestBase):
         self.assertEqual(len(b.images_local), 1)
         self.assertIn("imgs/x.png", b.html)
 
+    def test_dry_run_copies_images_into_out(self):
+        # 回归测试：normalize 对合格图片是原样返回、不落盘的，
+        # 但预览页需要图片真的在 out/imgs 下，否则整页裂图。
+        from PIL import Image
+
+        (self.tmp / "imgs").mkdir()
+        Image.new("RGB", (100, 60), (5, 5, 5)).save(self.tmp / "imgs" / "x.png")
+        md = self.write_md("a.md", "---\ntitle: T\n---\n![图](imgs/x.png)")
+        out = self.tmp / "out"
+        b = build_bundle(md, out_dir=str(out))
+        self.assertTrue((out / "imgs" / "x.png").is_file(), "预览用图片没有被复制到 out/imgs")
+
+    def test_preview_cover_copied_into_out(self):
+        from PIL import Image
+
+        Image.new("RGB", (1280, 544)).save(self.tmp / "my.png")
+        md = self.write_md("a.md", "---\ntitle: T\n---\n正文")
+        out = self.tmp / "out"
+        b = build_bundle(md, out_dir=str(out), cover=str(self.tmp / "my.png"))
+        self.assertEqual(b.cover_path.parent.resolve(), out.resolve())
+        self.assertTrue(b.cover_path.is_file())
+
     def test_image_handler_used(self):
         from PIL import Image
 
