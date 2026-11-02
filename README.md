@@ -90,12 +90,17 @@ wxpub doctor
 ✓ Pillow 13.0.0
 ✓ 中文字体
     标题  C:\Windows\Fonts\msyhbd.ttc
-✓ AppID     wx1234567890abcdef
-✓ AppSecret 1a2b****************9f8e
+✓ AppID     wx1a**********9f8e
+✓ AppSecret a1b2************************3c4d
 ✓ 当前出口 IP  203.0.113.7
 ✓ access_token 获取成功
 ✓ 草稿箱接口可用（现有草稿 3 篇）
 ```
+
+> `doctor` 默认打码 AppID。不是因为它机密，而是它的格式（`wx` + 16 位十六进制）
+> 正好命中 GitHub secret scanning 的「Tencent WeChat API App ID」规则 ——
+> 把输出粘进 issue 或 README，仓库会被挂上「公开泄露密钥」告警。
+> 这是个纯格式误报，但解释成本很高，所以默认打码，要看完整的加 `--show-credentials`。
 
 **3. 写一篇文章**
 
@@ -221,7 +226,7 @@ wxpub 会接着说：
 python -m unittest discover -s tests
 ```
 
-150 个测试，不联网，不依赖凭证。覆盖：封面安全区（任何标题都不能画出画布）、
+159 个测试，不联网，不依赖凭证。覆盖：封面安全区（任何标题都不能画出画布）、
 HTML 转义（防止注入把排版搞乱）、WebP 伪装成 png 的识别、各种畸形 markdown、错误诊断文案完整性。
 
 ---

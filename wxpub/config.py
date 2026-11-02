@@ -71,6 +71,20 @@ class Credentials:
             return "*" * len(s)
         return f"{s[:4]}{'*' * (len(s) - 8)}{s[-4:]}"
 
+    def masked_app_id(self) -> str:
+        """AppID 也打码。
+
+        AppID 本身不算机密，但它的格式（wx + 16 位十六进制）正好命中
+        GitHub secret scanning 的「Tencent WeChat API App ID」规则。
+        用户把 doctor 输出粘进 issue 或 README 时，仓库会被挂上
+        「公开泄露密钥」告警 —— 这是个纯格式误报，但解释成本很高。
+        所以默认打码，要看完整的加 --show-credentials。
+        """
+        s = self.app_id
+        if len(s) <= 8:
+            return "*" * len(s)
+        return f"{s[:4]}{'*' * (len(s) - 8)}{s[-4:]}"
+
 
 def load_credentials(require: bool = True) -> Credentials:
     env_id = os.environ.get("WECHAT_APP_ID") or os.environ.get("WXPUB_APP_ID")

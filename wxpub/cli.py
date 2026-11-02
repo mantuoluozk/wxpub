@@ -328,9 +328,11 @@ def cmd_doctor(args) -> int:
     except ConfigError:
         print(f"{BAD} 未配置。运行 wxpub init 查看配置方法")
         return 1
-    print(f"{OK} AppID     {cred.app_id}")
+    print(f"{OK} AppID     {cred.app_id if args.show_credentials else cred.masked_app_id()}")
     print(f"{OK} AppSecret {cred.masked_secret()}")
     print(f"     来源      {cred.source}")
+    if not args.show_credentials:
+        print("     已打码：这段输出可以直接贴到 issue / 文档里。加 --show-credentials 看完整值")
 
     # 4. 出口 IP（40164 的头号原因）
     print("\n[网络]")
@@ -521,6 +523,11 @@ def build_parser() -> argparse.ArgumentParser:
     pb.set_defaults(func=cmd_publish)
 
     d = sub.add_parser("doctor", help="体检：凭证、字体、网络、接口权限")
+    d.add_argument(
+        "--show-credentials",
+        action="store_true",
+        help="显示完整 AppID（默认打码，避免贴日志时被 GitHub 误报为泄露密钥）",
+    )
     d.set_defaults(func=cmd_doctor)
 
     i = sub.add_parser("init", help="初始化配置和示例文章")
