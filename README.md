@@ -130,6 +130,16 @@ wxpub publish article.md
 
 ## 封面：不调样式，只调参数
 
+文章已经有 frontmatter 了，直接读，不用重复写一遍标题：
+
+```bash
+wxpub cover article.md          # 读 title/subtitle/date/theme/layout，出 cover.png
+wxpub cover article.md -o a.png # 指定输出
+wxpub cover article.md --theme ocean --layout hero   # 命令行覆盖 frontmatter
+```
+
+没有 md 文件也能单独用：
+
 ```bash
 wxpub cover --title "你的密钥|在替别人**烧钱**" --subtitle "副标题" --theme midnight
 ```
@@ -211,7 +221,7 @@ wxpub 会接着说：
 python -m unittest discover -s tests
 ```
 
-143 个测试，不联网，不依赖凭证。覆盖：封面安全区（任何标题都不能画出画布）、
+150 个测试，不联网，不依赖凭证。覆盖：封面安全区（任何标题都不能画出画布）、
 HTML 转义（防止注入把排版搞乱）、WebP 伪装成 png 的识别、各种畸形 markdown、错误诊断文案完整性。
 
 ---

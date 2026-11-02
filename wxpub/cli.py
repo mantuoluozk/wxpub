@@ -30,33 +30,75 @@ def _setup_stdout() -> None:
 
 
 # ---------------------------------------------------------------------- cover
+def _frontmatter_of(path: Path) -> dict:
+    """读 markdown 的 frontmatter。读不出来就返回空字典，走命令行参数。"""
+    from .frontmatter import parse_frontmatter
+
+    try:
+        meta, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
+        return meta or {}
+    except (OSError, UnicodeDecodeError):
+        return {}
+
+
 def cmd_cover(args) -> int:
     from .cover import LAYOUTS, SIZES, render_cover
     from .theme import THEMES
+
+    meta: dict = {}
+    if getattr(args, "file", None):
+        src = Path(args.file)
+        if not src.is_file():
+            print(f"{WARN} 找不到文件：{src}")
+            return 2
+        meta = _frontmatter_of(src)
+
+    # 优先级：命令行 > frontmatter > 默认值。
+    # 所以这三个参数的 argparse 默认值必须是 None，否则分不清「没传」和「传了默认值」。
+    args.title = args.title or meta.get("title") or ""
+    args.subtitle = args.subtitle or meta.get("subtitle")
+    args.badge = args.badge or meta.get("date")
+    args.theme = args.theme or meta.get("theme") or "midnight"
+    args.layout = args.layout or meta.get("layout") or "stack"
+    args.size = args.size or "hd"
 
     if args.grid:
         return _render_grid(args)
 
     if not args.title:
-        print("需要 --title。例如：\n  wxpub cover --title '你的密钥|在替别人**烧钱**' --subtitle '副标题'")
+        print(
+            "需要 --title，或者传一个带 frontmatter 的 markdown 文件。例如：\n"
+            "  wxpub cover --title '你的密钥|在替别人**烧钱**' --subtitle '副标题'\n"
+            "  wxpub cover article.md -o cover.png"
+        )
         return 2
 
     if args.all_themes or args.all_layouts:
         return _render_all(args)
 
-    out = args.out or "cover.png"
-    img = render_cover(
-        title=args.title,
-        subtitle=args.subtitle,
-        badge=args.badge,
-        theme=args.theme,
-        layout=args.layout,
-        size=args.size,
-        width=args.width,
-        height=args.height,
-        title_size=args.title_size,
-        align=args.align,
-    )
+    if args.out:
+        out = args.out
+    elif getattr(args, "file", None):
+        out = str(Path(args.file).parent / (meta.get("cover") or "cover.png"))
+    else:
+        out = "cover.png"
+
+    try:
+        img = render_cover(
+            title=args.title,
+            subtitle=args.subtitle,
+            badge=args.badge,
+            theme=args.theme,
+            layout=args.layout,
+            size=args.size,
+            width=args.width,
+            height=args.height,
+            title_size=args.title_size,
+            align=args.align,
+        )
+    except (KeyError, ValueError) as exc:
+        print(f"{WARN} {exc}")
+        return 2
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     img.save(out)
     print(f"{OK} 封面已生成 {out}  {img.width}×{img.height}")
@@ -72,8 +114,8 @@ def _render_all(args) -> int:
 
     out_dir = Path(args.out or "covers")
     out_dir.mkdir(parents=True, exist_ok=True)
-    themes = list(THEMES) if args.all_themes else [args.theme]
-    layouts = list(LAYOUTS) if args.all_layouts else [args.layout]
+    themes = list(THEMES) if args.all_themes else [args.theme or "midnight"]
+    layouts = list(LAYOUTS) if args.all_layouts else [args.layout or "stack"]
     n = 0
     for t in themes:
         for l in layouts:
@@ -444,12 +486,13 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd")
 
     c = sub.add_parser("cover", help="生成封面图")
+    c.add_argument("file", nargs="?", help="markdown 文件，从 frontmatter 读标题/主题（可省略）")
     c.add_argument("--title", help="主标题，用 | 分行，**文字** 标记高亮")
     c.add_argument("--subtitle", help="副标题")
     c.add_argument("--badge", help="顶部胶囊文字，通常填日期")
-    c.add_argument("--theme", default="midnight", help="主题名，见 wxpub themes")
-    c.add_argument("--layout", default="stack", help="布局名，见 wxpub themes")
-    c.add_argument("--size", default="hd", help="hd/fhd/small")
+    c.add_argument("--theme", help="主题名，见 wxpub themes（默认取 frontmatter，否则 midnight）")
+    c.add_argument("--layout", help="布局名，见 wxpub themes（默认取 frontmatter，否则 stack）")
+    c.add_argument("--size", help="hd/fhd/small，默认 hd")
     c.add_argument("--width", type=int)
     c.add_argument("--height", type=int)
     c.add_argument("--title-size", type=int, dest="title_size", help="强制标题字号")
