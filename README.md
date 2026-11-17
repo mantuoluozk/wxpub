@@ -1,246 +1,106 @@
-# wxpub
+# wxpub · 微信公众号写作与草稿箱
 
-**Markdown 一键发进微信公众号草稿箱，顺带把封面画好。**
+**用 `wechat-writing` 写公众号，用 `wxpub` 预览和推草稿箱。** 你可以从 AI 新闻找选题，也可以直接交自己的主题、实操流程或初稿。写完可做模型封面、改成小红书笔记，或生成适合微信的 HTML。
 
-不用再开浏览器排版、不用手动传图、不会被 `40164` 卡半小时。
-
-```bash
-wxpub publish article.md --dry-run   # 本地看成品
-wxpub publish article.md             # 推到草稿箱
-```
-
----
-
-## 用作公众号写作 Skill
-
-GitHub 仓库名为 `wxpub`，安装到 WorkBuddy 或 Claude Code 的技能名为 `wechat-writing`。技能负责选题、成稿、审稿、小红书改写和模型生图。终端命令也叫 `wxpub`，接收成稿和封面，生成微信预览并推草稿箱。原 [daily-ai-news](https://github.com/mantuoluozk/daily-ai-news) 的 AI 新闻选题已并入写作 Skill。
-
-1. 安装下文的 `wxpub` 命令。只起草或编辑 Markdown 时可以直接使用 Skill。
-2. Claude Code 用户将 [`skills/wechat-writing`](skills/wechat-writing) 目录复制到 `~/.claude/skills/`。WorkBuddy 用户可在「添加技能 → 上传技能」导入同一个目录或含该目录的技能 ZIP。
-3. 在对话里说「发一篇 AI 新闻」「按我的样文改这篇公众号稿」「改成小红书」或「预览这篇公众号」。支持命令调用的环境可以使用 `/wechat-writing`。
-
-范文库为可选功能，用 `uv tool install wewrite` 安装命令；公众号预览和推送仍使用 `wxpub`。第三方模块及许可见 [上游来源](skills/wechat-writing/references/upstream/README.md)。
-
-## 它长什么样
-
-写作 Skill 默认调用宿主的图像生成工具做封面。命令行的 `wxpub cover` 提供基于模板的封面，也可在没有生图工具时使用：
-
-![封面模板](docs/templates.png)
-
-正文排版直接内联到每个标签里，粘进公众号后台就是成品，不用二次调样式。
-下面这张是 `--dry-run` 生成的本地预览，就是你手机上看到的样子：
-
-<img src="docs/preview.png" width="400" alt="正文排版预览">
-
-| 命令 | 产出 |
+| 名称 | 用在哪里 |
 |---|---|
-| `wxpub cover` | 1280×544 封面，11 主题 × 6 布局 |
-| `wxpub publish --dry-run` | 本地 `preview.html`（手机宽度预览）+ 成品 HTML |
-| `wxpub publish` | 封面 → 永久素材，正文图 → CDN，文章 → 草稿箱 |
-| `wxpub doctor` | 凭证、字体、出口 IP、接口权限，一次全查 |
+| [`wechat-writing`](skills/wechat-writing) | WorkBuddy / Claude Code 的写作 Skill。选题、找自己的案例、调研、起草、审稿、封面和小红书改写。 |
+| `wxpub` | 终端命令。读取 Markdown 与封面，生成本地预览，上传图片并创建微信草稿。也可以单独使用。 |
 
----
+## 快速上手
 
-## 为什么又造一个轮子
+### 从 WorkBuddy 或 Claude Code 开始
 
-因为发一篇公众号文章，真正花时间的不是写，是这 21 个坑：
+在 WorkBuddy 的「添加技能 → 上传技能」导入 [`skills/wechat-writing`](skills/wechat-writing) 目录或包含该目录的 ZIP。Claude Code 用户把同一目录复制到 `~/.claude/skills/`，然后在新会话使用 `/wechat-writing` 或自然语言。
 
-> 封面用 16:9 被信息流裁掉两侧 · 中文字在生图模型里变乱码 · 网页图存下来是 WebP 微信不收 ·
-> 正文图片 1MB 就上传失败 · `40164 invalid ip` 不知道要去哪加白名单 · 白名单加了还报错因为在缓存 ·
-> 代理让出口 IP 变了 · access_token 被另一个脚本顶掉 · 外文引用超 50 词卡住原创声明 ·
-> 标题超 64 字发布会失败 · **`45166` 这个微信错误码表里根本没有的错误** · 长代码块要横向滑才能看全 …
+> 用 wechat-writing 写一篇公众号。主题和步骤我已整理好，按我的实测顺序写。重点讲第二步为什么失败。保留版本号、命令和我确认过的结果，先只出 Markdown。
 
-完整的 21 条在 [PITFALLS.md](PITFALLS.md)，每条都写清了现象、原因和这个工具怎么处理。
+| 你可以说 | 会拿到什么 |
+|---|---|
+| 「今天 AI 新闻里有什么值得写？」 | 候选主题、原始来源和推荐理由。 |
+| 「在我指定的实验记录里找相关案例，顺便查官方资料」 | 带出处的真实案例。需要多轮搜索时，调研结果随查随存到 `research.md`。 |
+| 「只改开头和结尾，删套话和重复」 | 按指定范围修改的稿件，沿用作者语气并保留事实与限制条件。 |
+| 「用这张旧封面做参考，给这篇生成一版封面和预览」 | 模型成图、微信 HTML 和本地预览。 |
+| 「把这篇改成小红书笔记」 | 单独的 `xiaohongshu.md`，按笔记阅读顺序重写。 |
 
-其中最后那几条，是写这个工具时真踩到的 —— 第一版渲染器老老实实生成了 `<a href>` 超链接，
-真发布直接 `45166`。现在链接统一渲染成带虚线的 `span`，提交前还有一道全文清洗兜底。
+只写稿和改稿时可以直接用 Skill。封面生图调用宿主已有的图像工具。范文库为可选功能，安装命令是 `uv tool install wewrite`。
 
-**别人的工具帮你转换格式，这个工具帮你避坑。**
+### 从 Markdown 开始
 
----
-
-## 安装
-
-需要 Python 3.9+。只有两个依赖：Pillow 和 requests。
+需要 Python 3.9+、Pillow 和 requests。已有 Markdown 时，可直接安装命令并预览。
 
 ```bash
 pip install git+https://github.com/mantuoluozk/wxpub.git
+wxpub publish article.md --dry-run -o out
 ```
 
-或者本地开发：
+打开 `out/preview.html` 查看手机宽度排版。`out/article.html` 是内联样式的成品。预览无需公众号凭证。
+
+```markdown
+---
+title: 我怎么定位这次推理掉速
+subtitle: 一次从日志到可复现结论的排查
+author: 你的署名
+cover: cover.png
+---
+
+正文从这里开始。
+```
+
+有现成封面时，填相对路径 `cover: cover.png` 或传 `--cover`。推草稿箱前配置一次 AppID / AppSecret，再跑体检。
+
+```bash
+wxpub init         # 创建 ~/.wxpub/.env 模板，在本机填写账号凭证
+wxpub doctor       # 检查字体、凭证、出口 IP 与接口权限
+wxpub publish article.md -o out
+```
+
+也可以沿用 `~/.baoyu-skills/.env` 里的已有配置。最后一条命令把成稿放进公众号草稿箱，正式发文可在后台完成。
+
+## 封面与预览
+
+Skill 默认让图像模型直接生成整张封面。它会看文章和你提供的旧图，按 2.35:1 构图，把主体与必要文字留在中间。成图进同一个预览和推送流程。[封面规则](skills/wechat-writing/references/cover.md)
+
+`wxpub cover` 也提供本地模板，支持 11 套主题、6 种布局。可以读 Markdown 的标题和副标题，也可以单独传标题。
+
+```bash
+wxpub cover article.md -o cover.png
+wxpub cover article.md --theme ocean --layout hero
+wxpub themes
+```
+
+![wxpub 本地模板示例](docs/templates.png)
+
+<img src="docs/preview.png" width="400" alt="微信正文的本地预览" />
+
+## 微信发布细节
+
+- 预览和交付 HTML 使用内联样式。推草稿时，工具上传正文图、处理常见图片格式，检查引用、站外链接和正文长度。
+- `40164` 时先用 `wxpub doctor` 核对出口 IP 与公众号后台白名单。
+- 如果账号没有草稿箱接口权限，仍可用 `--dry-run` 生成 HTML，再贴进后台编辑器。
+- 具体限制、错误提示与修复办法见 [实测踩坑记录](PITFALLS.md)。
+
+## 来源与致谢
+
+| 项目 | 在 wxpub 里的用途 |
+|---|---|
+| [Humanizer-zh](https://github.com/op7418/Humanizer-zh) | 三遍审校的第二遍用它精简表达，处理复读、套话和模板句。 |
+| [WeWrite](https://github.com/imraywang/wewrite) | 内置部分编辑和跨平台参考，可选使用本地范文库。 |
+| [Skill-Bible · xhs-content](https://github.com/Luyu2026/Skill-Bible/tree/main/xiaohongshu-operations-skills/xhs-content) | 内置的小红书体裁参考。上游原文采用 CC BY-NC 4.0。 |
+| [花叔的 huashu-skills](https://github.com/alchaincyf/huashu-skills) · [参考图生成](https://github.com/alchaincyf/huashu-gpt-image) | 借鉴选题、三遍审校、个人素材搜索、多轮调研、按范围编辑与主题封面。相关规则已写进 `wechat-writing`。 |
+| [宝玉的 baoyu-skills](https://github.com/JimLiu/baoyu-skills) | 早期公众号工作流使用过的发布工具，`wxpub` 兼容原有凭证配置。 |
+| [daily-ai-news](https://github.com/mantuoluozk/daily-ai-news) · [AIHot](https://aihot.news/) | 日报选题流程已合并到此仓库，AI 新闻候选来自 AIHot。 |
+
+内置文件、版本与许可见 [上游来源](skills/wechat-writing/references/upstream/README.md)。
+
+## 开发与测试
 
 ```bash
 git clone https://github.com/mantuoluozk/wxpub.git
 cd wxpub
 pip install -e .
-```
-
-> Linux 上如果提示找不到中文字体：`sudo apt install fonts-noto-cjk`（工具会告诉你缺什么）
-
----
-
-## 30 秒上手
-
-**1. 配凭证**（只需一次）
-
-```bash
-wxpub init            # 生成 ~/.wxpub/.env 模板
-```
-
-去 [mp.weixin.qq.com](https://mp.weixin.qq.com) → 设置与开发 → 基本配置，把 AppID 和 AppSecret 填进那个文件。
-
-**2. 体检**
-
-```bash
-wxpub doctor
-```
-
-```
-✓ Python 3.13.12
-✓ Pillow 13.0.0
-✓ 中文字体
-    标题  C:\Windows\Fonts\msyhbd.ttc
-✓ AppID     wx1a**********9f8e
-✓ AppSecret a1b2************************3c4d
-✓ 当前出口 IP  203.0.113.7
-✓ access_token 获取成功
-✓ 草稿箱接口可用（现有草稿 3 篇）
-```
-
-> `doctor` 默认打码 AppID。不是因为它机密，而是它的格式（`wx` + 16 位十六进制）
-> 正好命中 GitHub secret scanning 的「Tencent WeChat API App ID」规则 ——
-> 把输出粘进 issue 或 README，仓库会被挂上「公开泄露密钥」告警。
-> 这是个纯格式误报，但解释成本很高，所以默认打码，要看完整的加 `--show-credentials`。
-
-**3. 写一篇文章**
-
-```markdown
----
-title: 你的密钥在替别人烧钱
-subtitle: 一个月 9 家 AI 开发平台被攻破
-date: 2026-11-02
-author: 阿派
-theme: midnight
-layout: stack
----
-
-正文写 **markdown** 就行。
-```
-
-**4. 先看效果，再发**
-
-```bash
-wxpub publish article.md --dry-run
-```
-
-打开生成的 `out/preview.html`，就是手机上看到的样子。满意了：
-
-```bash
-wxpub publish article.md
-```
-
-草稿已经在你后台了，去确认一下就能群发。
-
----
-
-## 封面：不调样式，只调参数
-
-文章已经有 frontmatter 了，直接读，不用重复写一遍标题：
-
-```bash
-wxpub cover article.md          # 读 title/subtitle/date/theme/layout，出 cover.png
-wxpub cover article.md -o a.png # 指定输出
-wxpub cover article.md --theme ocean --layout hero   # 命令行覆盖 frontmatter
-```
-
-没有 md 文件也能单独用：
-
-```bash
-wxpub cover --title "你的密钥|在替别人**烧钱**" --subtitle "副标题" --theme midnight
-```
-
-- `|` 分行，`**文字**` 高亮（用主题色）
-- 字号按可用宽度自动收缩，实在放不下才折行，折行优先断在标点后
-- 所有关键文字**强制水平居中** —— 因为信息流会裁掉封面左右两边，靠边就等于看不见
-- 整块内容垂直居中，不硬编码 y 坐标
-
-```bash
-wxpub themes                          # 看所有主题和布局
-wxpub cover --all-themes --title "T"  # 一次出一套，挑一张
-```
-
-| 主题 | 布局 |
-|---|---|
-| `midnight` 午夜蓝 · `ocean` 深海 · `ember` 余烬 | `stack` 双行大标题（默认，最稳） |
-| `forest` 墨林 · `violet` 紫夜 · `sunset` 暮色 | `hero` 单行超大标题（结论式） |
-| `ink` 浓墨 · `mono` 极简灰 · `crimson` 朱印 | `minimal` 只有标题（缩略图最清晰） |
-| `paper` 纸白 · `sakura` 浅樱（浅色系） | `split` 左对齐竖条 · `banner` 顶部色带 · `quote` 引号水印 |
-
----
-
-## 报错会告诉你怎么修
-
-其他工具到这里就结束了：
-
-```
-errcode: 40164, errmsg: invalid ip 203.0.113.7, not in whitelist
-```
-
-wxpub 会接着说：
-
-```
-微信接口报错 40164（出错环节：上传封面）
-  调用方 IP 不在公众号白名单里
-  原因：微信只允许白名单内的 IP 调用接口。你的出口 IP 变了 ——
-        换网络、重拨宽带、开/关代理、云主机重建，都会变。
-  怎么修：
-    1. 拿到本机当前出口 IP：wxpub doctor 会自动打印，或手动 curl https://api.ipify.org
-    2. 打开 mp.weixin.qq.com → 设置与开发 → 基本配置 → IP 白名单 → 修改
-    3. 把刚才的 IP 加进去。IPv4 和 IPv6 分两栏，都要加
-    4. 保存后等 1-2 分钟再重试。微信有缓存，这期间会继续报 40164，不是没加成功
-  报错里的 IP：203.0.113.7
-```
-
-已收录 17 个高频错误码。除了 `40164`，还有那个微信错误码表里查不到的 `45166`，以及最容易被误判成配置问题的 `48001`（个人未认证订阅号用不了草稿箱接口）。
-
----
-
-## 发布前自动体检
-
-`publish` 会把能预见的坑扫一遍，**不阻断发布，只提醒**：
-
-```
-! 发布前检查发现 3 条，建议先看一遍：
-  · 第 2 段引用里有 47 个英文词（超过 30 词安全线）：「This is a very long...」
-    建议缩成一句短引 + 中文复述 + 文末链接，否则「编辑原创」可能卡住保存
-  · 正文有 1 个站外链接（如 https://example.com/...）。公众号里站外链接不可点击
-  · 图片 img.png [WEBP 1200x800 340KB]：格式 WEBP → PNG（微信不收这种格式）
-```
-
----
-
-## 一些边界
-
-**个人未认证订阅号用不了草稿箱接口。** 微信要求「已认证的订阅号或服务号」，返回 `48001`。
-这不是配置问题，是账号资质。这种情况下用 `--dry-run` 生成成品 HTML，手动粘进后台编辑器 —— 样式已经全部内联，粘过去就是排版好的样子。
-
-**站外链接在公众号里不可点击。** 微信的限制，不是工具的问题。建议放文末或转二维码。
-
-**正文 HTML 上限 2 万字符。** 微信按源码长度算，不是按字数，长代码块很容易超。超了工具会提前告诉你。
-
----
-
-## 测试
-
-```bash
 python -m unittest discover -s tests
 ```
 
-160 个测试，不联网，不依赖凭证。覆盖：封面安全区（任何标题都不能画出画布）、
-HTML 转义（防止注入把排版搞乱）、WebP 伪装成 png 的识别、各种畸形 markdown、错误诊断文案完整性。
+项目采用 [MIT](LICENSE)，随附的第三方资料保留各自许可。
 
----
-
-## License
-
-MIT
