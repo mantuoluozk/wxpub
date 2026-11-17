@@ -32,7 +32,7 @@
 | 「用这张旧封面做参考，给这篇生成一版封面和预览」 | 模型成图、微信 HTML 和本地预览。 |
 | 「把这篇改成小红书笔记」 | 单独的 `xiaohongshu.md`，按笔记阅读顺序重写。 |
 
-只写稿和改稿时可以直接用 Skill。封面生图调用宿主已有的图像工具。范文库为可选功能，安装命令是 `uv tool install wewrite`。
+只写稿和改稿时可以直接用 Skill。封面使用统一手绘风格，宿主的图像工具生成无字背景，随后叠加标题。范文库为可选功能，安装命令是 `uv tool install wewrite`。
 
 ### 从 Markdown 开始
 
@@ -59,9 +59,9 @@ wxpub publish article.md -o out
 
 ## 成稿示例
 
-《显存没满，为什么首字还是慢》使用模型直接生成封面。下方正文截图来自同一篇 Markdown 经 `wxpub publish --dry-run` 渲染的手机宽度预览。[查看示例 Markdown](examples/demo-article.md)
+《显存没满，为什么首字还是慢》的封面由模型绘制手绘背景，再叠加统一样式的标题。下方正文截图来自同一篇 Markdown 经 `wxpub publish --dry-run` 渲染的手机宽度预览。[查看示例 Markdown](examples/demo-article.md)
 
-![模型生成的公众号封面，红色请求卡片排队进入蓝色芯片](docs/demo-cover.jpg)
+![手绘公众号封面，左侧是标题，右侧是请求卡片和蓝色芯片](docs/demo-cover.jpg)
 
 <img src="docs/demo-preview.png" width="420" alt="示例文章的微信正文预览" />
 
