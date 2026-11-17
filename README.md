@@ -4,14 +4,23 @@
 
 | 名称 | 用在哪里 |
 |---|---|
-| [`wechat-writing`](skills/wechat-writing) | WorkBuddy / Claude Code 的写作 Skill。选题、找自己的案例、调研、起草、审稿、封面和小红书改写。 |
+| [`wechat-writing`](skills/wechat-writing) | WorkBuddy、DSH 或 Claude Code 的写作 Skill。选题、找自己的案例、调研、起草、审稿、封面和小红书改写。 |
 | `wxpub` | 终端命令。读取 Markdown 与封面，生成本地预览，上传图片并创建微信草稿。也可以单独使用。 |
 
 ## 快速上手
 
-### 从 WorkBuddy 或 Claude Code 开始
+### WorkBuddy / DSH
 
-在 WorkBuddy 的「添加技能 → 上传技能」导入 [`skills/wechat-writing`](skills/wechat-writing) 目录或包含该目录的 ZIP。Claude Code 用户把同一目录复制到 `~/.claude/skills/`，然后在新会话使用 `/wechat-writing` 或自然语言。
+在 WorkBuddy 或 DSH 安装同一份 [`wechat-writing` 技能目录](skills/wechat-writing)。先从 GitHub 下载仓库 ZIP 并解压，安装时保留整个 `wechat-writing` 目录及其 `references/`。
+
+| 环境 | 怎么装 |
+|---|---|
+| WorkBuddy | 在「添加技能 → 上传技能」导入 `skills/wechat-writing` 技能包。[WorkBuddy 技能文档](https://intl.cloud.tencent.com/zh/document/product/1316/84503) |
+| DSH（DeepSeek Harness） | 把 `wechat-writing` 目录复制到 `~/.dsh/skills/`；也可放到项目的 `.dsh/skills/`。[DSH 本地技能文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/skill/skill-filesystem/README.zh.md) |
+| Claude Code | 把同一目录放到 `~/.claude/skills/`。 |
+
+安装后用 `/wechat-writing` 或自然语言开始。
+
 
 > 用 wechat-writing 写一篇公众号。主题和步骤我已整理好，按我的实测顺序写。重点讲第二步为什么失败。保留版本号、命令和我确认过的结果，先只出 Markdown。
 
@@ -31,21 +40,12 @@
 
 ```bash
 pip install git+https://github.com/mantuoluozk/wxpub.git
-wxpub publish article.md --dry-run -o out
+wxpub publish examples/demo-article.md --dry-run -o out
 ```
 
 打开 `out/preview.html` 查看手机宽度排版。`out/article.html` 是内联样式的成品。预览无需公众号凭证。
 
-```markdown
----
-title: 我怎么定位这次推理掉速
-subtitle: 一次从日志到可复现结论的排查
-author: 你的署名
-cover: cover.png
----
-
-正文从这里开始。
-```
+可直接试跑仓库里的 [示例文章《显存没满，为什么首字还是慢》](examples/demo-article.md)。使用自己的文章时，把路径换成你的 Markdown 文件。
 
 有现成封面时，填相对路径 `cover: cover.png` 或传 `--cover`。推草稿箱前配置一次 AppID / AppSecret，再跑体检。
 
@@ -57,21 +57,14 @@ wxpub publish article.md -o out
 
 也可以沿用 `~/.baoyu-skills/.env` 里的已有配置。最后一条命令把成稿放进公众号草稿箱，正式发文可在后台完成。
 
-## 封面与预览
+## 成稿示例
 
-Skill 默认让图像模型直接生成整张封面。它会看文章和你提供的旧图，按 2.35:1 构图，把主体与必要文字留在中间。成图进同一个预览和推送流程。[封面规则](skills/wechat-writing/references/cover.md)
+《显存没满，为什么首字还是慢》使用模型直接生成封面。下方正文截图来自同一篇 Markdown 经 `wxpub publish --dry-run` 渲染的手机宽度预览。[查看示例 Markdown](examples/demo-article.md)
 
-`wxpub cover` 也提供本地模板，支持 11 套主题、6 种布局。可以读 Markdown 的标题和副标题，也可以单独传标题。
+![模型生成的公众号封面，红色请求卡片排队进入蓝色芯片](docs/demo-cover.jpg)
 
-```bash
-wxpub cover article.md -o cover.png
-wxpub cover article.md --theme ocean --layout hero
-wxpub themes
-```
+<img src="docs/demo-preview.png" width="420" alt="示例文章的微信正文预览" />
 
-![wxpub 本地模板示例](docs/templates.png)
-
-<img src="docs/preview.png" width="400" alt="微信正文的本地预览" />
 
 ## 微信发布细节
 
