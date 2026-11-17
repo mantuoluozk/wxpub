@@ -10,7 +10,7 @@
 
 ## 删改
 
-读取 `upstream/humanizer-zh/SKILL.md`。先删复读段、背景套话、预告和空泛结尾，再修妨碍理解的句子。保留事实、数字、代码、链接、归因及不确定性。保留原有 Markdown 和 YAML；更改已经核对过的事实时重核对应来源。写完从头通读一遍，确认读者能在开头看懂这篇要说什么。
+读取 `upstream/humanizer-zh/SKILL.md`。先核事实和论证顺序，再删复读段、背景套话、预告和空泛结尾，最后按手机阅读节奏通读。列表适合并列信息和操作步骤，能在一小段讲完的就写成一小段。保留事实、数字、代码、链接、归因及不确定性。保留原有 Markdown 和 YAML；更改已经核对过的事实时重核对应来源。写完从头通读一遍，确认读者能在开头看懂这篇要说什么。审稿顺序参考花叔的 [三遍审校](https://github.com/alchaincyf/huashu-skills/tree/master/huashu-proofreading)，文字处理依照 Humanizer-zh 和作者样文。
 
 ## 学习作者文风
 

@@ -13,7 +13,7 @@ wxpub publish article.md             # 推到草稿箱
 
 ## 用作公众号写作 Skill
 
-这个仓库同时包含写作 Skill 和 `wxpub` 命令。Skill 负责从选题到成稿、按样文审稿、改写小红书。命令负责公众号封面、预览和推草稿箱。原 [daily-ai-news](https://github.com/mantuoluozk/daily-ai-news) 的 AI 新闻选题已并入写作 Skill。
+GitHub 仓库名为 `wxpub`，安装到 WorkBuddy 或 Claude Code 的技能名为 `wechat-writing`。技能负责选题、成稿、审稿、小红书改写和模型生图。终端命令也叫 `wxpub`，接收成稿和封面，生成微信预览并推草稿箱。原 [daily-ai-news](https://github.com/mantuoluozk/daily-ai-news) 的 AI 新闻选题已并入写作 Skill。
 
 1. 安装下文的 `wxpub` 命令。只起草或编辑 Markdown 时可以直接使用 Skill。
 2. Claude Code 用户将 [`skills/wechat-writing`](skills/wechat-writing) 目录复制到 `~/.claude/skills/`。WorkBuddy 用户可在「添加技能 → 上传技能」导入同一个目录或含该目录的技能 ZIP。
@@ -23,7 +23,7 @@ wxpub publish article.md             # 推到草稿箱
 
 ## 它长什么样
 
-封面是代码画的，不是 AI 生图 —— 中文字不会乱码，改一个字重跑 0.1 秒：
+写作 Skill 默认调用宿主的图像生成工具做封面。命令行的 `wxpub cover` 提供基于模板的封面，也可在没有生图工具时使用：
 
 ![封面模板](docs/templates.png)
 
